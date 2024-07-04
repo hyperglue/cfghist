@@ -1,0 +1,11 @@
+#!/bin/sh
+if test -z "${1}"
+then
+        echo "Please specify mountpoint!"
+        exit 1
+fi
+
+DATE_Z="$(date -u +%Y%m%d-%H%M%SZ)"
+DATASET="$(zfs-get-dataset-by-mountpoint "${1}")"
+zfs snapshot "${DATASET}@${DATE_Z}_${2}"
+zfs list -t all -o name | grep "${DATASET}"

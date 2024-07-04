@@ -1,0 +1,10 @@
+#!/bin/sh
+if test -z "${1}"
+then
+        echo "Please specify mountpoint!"
+        exit 1
+fi
+
+mountpoint="$(readlink -f "${1}")"
+
+mount | grep -E " ${mountpoint} .*zfs" | cut -d " " -f 1 
