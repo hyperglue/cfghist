@@ -20,3 +20,11 @@ How it works?
 
 Run commnads are saved in config file, and changes to files are saved with diffs. For now, there is no script for recreating changes from these files, but when there's need for it, I will create one.
 For now I am mainly using these scripts for keeping history of made changes, and for creating snapshots of my system so I always have something to rollback to.
+
+Dependencies
+------------
+- bash
+- git
+- coreutils
+- grep
+- sed

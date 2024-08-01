@@ -1,17 +1,23 @@
 #!/bin/bash
 
 # export variables
-export EDITOR=nvim
+export EDITOR="${EDITOR:-nano}"
 
 export CONFIGDIR=/etc/cfghist
 export CONFIGFILE="${CONFIGDIR}"/configfile
-export CONFIGIGNORE="^=|^cd|^edit|^show|^history|^ls|^cat|^zfs get|^zfs list|^exit|^quit|^pkill|^ps|^xbps-query" 
+export FILESDIR="${CONFIGDIR}"/files
+
+export CONFIGIGNORE="^$|^=|^cd|^edit|^show|^history|^ls|^cat|^zfs get|^zfs list|^exit|^quit|^pkill|^ps|^xbps-query"
 
 export HISTFILE="${CONFIGDIR}"/history
 export HISTFILESIZE=999999
 export HISTSIZE=999999
 
-export PS1="\[\e[1;34m\]config mode\[\e[0m\] | \[\e[1;31m\]type 'quit' to save!\[\e[0m\] \w # "
+export PS1="\[\e[1;34m\]config mode\[\e[0m\] | \[\e[1;31m\]type 'quit' to save!\[\e[0m\]\n\w # "
+
+function to_snake_case() {
+    echo "${1}" | tr '[:upper:]' '[:lower:]' | sed -E 's|\ |\_|g; s|(\S)_\$|\1|g'
+}
 
 # check if we are running as root
 if test "$(id -u)" -ne 0
@@ -26,13 +32,14 @@ ask_if_save() {
     read -rp "Are you sure you want to save the changes? ([Y]es/[N]o) " answer_save;
     case "${answer_save}" in
 	[yY]|[yY][eE][sS])
-	    "${EDITOR}" "${CONFIGFILE}.current" # edit file in case we want to delete/modify some other commands
+	    "${EDITOR}" "${CONFIGFILE}.current" # edit file in case we want to delete/modify some commands
 	    cat "${CONFIGFILE}.current" >> "${CONFIGFILE}"
 	    rm "${CONFIGFILE}.current"
 	    ask_if_snapshot
 	    ;;
 	[nN]|[nN][oO])
 	    rm "${CONFIGFILE}.current"
+	    git reset --hard HEAD
 	    ask_if_rollback
 	    ;;
 	*)
@@ -44,13 +51,13 @@ ask_if_save() {
 
 # ask if we want to rollback
 ask_if_rollback() {
-    read -rp "Do you want to rollback to last snapshot? ([Y]es/[N]o) " answer_rollback;
+    read -rp "Do you want to rollback to last snapshot and commit? ([Y]es/[N]o) " answer_rollback;
     case "${answer_rollback}" in
 	[yY]|[yY][eE][sS])
 	    last_snapshot="$(zfs list -o name -t snapshot "$(zfs-get-dataset-by-mountpoint /)" | tail -1)"
 	    set -x
 	    zfs rollback "${last_snapshot}"
-	    mount -o remount,rw /
+	    zfs mount -o remount,rw "$(zfs-get-dataset-by-mountpoint /)"
 	    exit 0
 	    ;;
 	[nN]|[nN][oO])
@@ -68,9 +75,15 @@ ask_if_snapshot() {
     read -rp "Do you want to create a snapshot? ([Y]es/[N]o) " answer_snapshot;
     case "${answer_snapshot}" in
 	[yY]|[yY][eE][sS])
-	    read -rp "Name for the snapshot? " answer_name;
-	    zfs-snapshot / "${answer_name}"
-	    echo "zfs-snapshot / ${answer_name}" >> "${CONFIGFILE}"
+	    read -rp "Name for the snapshot/commit? " answer_name;
+	    answer_name_snake_case="$(to_snake_case "${answer_name}")"
+	    echo "zfs-snapshot / ${answer_name_snake_case}" >> "${CONFIGFILE}"
+		# shellcheck disable=SC2164
+	    cd "${CONFIGDIR}"
+	    git add ./*
+	    git add ./.*
+	    git commit -m "${answer_name}" -m "${answer_name_snake_case}"
+	    zfs-snapshot / "${answer_name_snake_case}"
 	    exit 0
 	    ;;
 	[nN]|[nN][oO])
@@ -84,32 +97,22 @@ ask_if_snapshot() {
 
 }
 
-# when we want to edit file, first we need to get absolute path and create version before edit
-# after edit we create diff between old and new version, then remove old version and append edit with absolute path to history file
+
+# when we want to edit file, we make changes then we copy the file to CONFIGDIR repository
 function edit() {
     filename="$(readlink -f "${1}")"
-    patchname="$(echo "${filename}" | sed -s 's|\/|-|g; s|^.||g').patch"
+    dirname="$(dirname "${filename}")"
     touch "${filename}"
-    cp "${filename}" "${filename}.old"
     "${EDITOR}" "${filename}"
-    diff -u "${filename}.old" "${filename}" >> "${CONFIGDIR}/patches/${patchname}"
-    echo >> "${HOME}/${patchname}"
-    rm "${filename}.old"
+    mkdir -p "${FILESDIR}/${dirname}"
+    cp -f "${filename}" "${FILESDIR}/${filename}"
     echo "edit ${filename}" >> "${CONFIGFILE}.current"
+
 }
 
-# when we quit, we check if there are any empty patch files
 function quit() {
     save_previous_command # save the last command
-
-    for file in "${CONFIGDIR}"/patches/* 
-    do
-	if test -z "$(cat "${file}")"; then
-	    rm "${file}"
-	fi
-    done
-
-    exit
+    exit 0
 }
 
 function save_previous_command() {
@@ -142,8 +145,21 @@ export -f quit
 export -f save_previous_command
 export -f show
 
-mkdir -p "${CONFIGDIR}/patches"
+# if git repo doesn't exist, then create it
+if ! test -d "${CONFIGDIR}/.git"
+then 
+    git init "${CONFIGDIR}"
+	echo "history" > "${CONFIGDIR}/.gitignore"
+	mkdir -p "${FILESDIR}"
+fi
 
-zfs-snapshot / before_config
+# check if user.name and user.email are set, so we can commit changes later
+# shellcheck disable=SC2164
+cd "${CONFIGDIR}"
+if ! (git config --get user.email && git config --get user.name) > /dev/null
+then
+    echo "Please set Git user.email and user.name, either globally or in ${CONFIGDIR}"
+    exit 2
+fi
+
 PROMPT_COMMAND="save_previous_command" bash --norc --noprofile; ask_if_save
-
