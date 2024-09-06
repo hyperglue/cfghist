@@ -1,25 +1,25 @@
 cfghist
 =======
-A tool for creating config history of Linux/UNIX system.
+A tool for creating a configuration history of Linux systems.
 
 Idea
 ----
-I tend to experiment a lot with my systems and I was looking for a way to save changes to file/few files so those could be relatively easy to reproduce.
-There are tools like Ansible that could work resonably well for this use case, but writing whole playbook up front took too much time.
-I wanted something that would save my changes after I already made them to my system and tested them.  
+As someone who frequently experiments with operating systems, I wanted a way to save the changes I make for easy reproduction or reference later.
+While tools like Ansible work very well for this use case, writing a complete playbook upfront can be very time-consuming in my opinion.
 
-Inspiration for creating this tool was `configuration` command of Cisco's iOS. On there you can make changes then save or reject them and go back to previous state.
-In this case we are using ZFS snapshots for that.  
+I was looking for something that would track commands and files, allowing me to save changes after testing or revert to a previous version if needed.
+I couldn't really find anything like that, so I created this simple tool. The inspiration came from the `configuration` command in Cisco iOS.
 
 How it works?
 -------------
-- First, a snapshot is created before any changes are made
-- Then we get normal bash shell, but every command that is run is saved to current config file
-- There is also `edit` command, it creates diff of edited file, so we can track of changes to files too
-- When we are done, we need to use `quit` command, it then asks if we want to save changes, create a new snapshot or rollback to clean one
+This tool leverages the snapshot capabilities of ZFS.
 
-Run commnads are saved in config file, and changes to files are saved with diffs. For now, there is no script for recreating changes from these files, but when there's need for it, I will create one.
-For now I am mainly using these scripts for keeping history of made changes, and for creating snapshots of my system so I always have something to rollback to.
+- A snapshot is created before any changes are made. 
+- Then, user enters a bash shell, where every command is saved to a temporary configuration file. Non-essential commands like `ls` can be filtered out using Regex.
+- The `edit` command creates copy of an edited file in configuration directory, allowing for tracking of changes made to files.
+- Upon completion, the `quit` command prompts the user to either save changes, create a new snapshot, or rollback to the previous state. 
+
+Commands are saved to a configuration file, and changes to all files are tracked using Git. Currently, there is no script available for recreating the system from the configuration files, but I will create one if the need arises. For now, I primarily use this tool for documenting changes made to my systems and for automatic snapshots and rollbacks.
 
 Dependencies
 ------------
