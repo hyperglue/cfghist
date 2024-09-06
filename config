@@ -100,9 +100,9 @@ ask_if_snapshot() {
 
 # when we want to edit file, we make changes then we copy the file to CONFIGDIR repository
 function edit() {
+    touch "${1}"
     filename="$(readlink -f "${1}")"
     dirname="$(dirname "${filename}")"
-    touch "${filename}"
     "${EDITOR}" "${filename}"
     mkdir -p "${FILESDIR}/${dirname}"
     cp -f "${filename}" "${FILESDIR}/${filename}"
