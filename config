@@ -1,10 +1,11 @@
 #!/bin/bash
 
 # export variables
-export EDITOR="${EDITOR:-nano}"
+export EDITOR="${EDITOR:-nvim}"
 
-export CONFIGDIR=/etc/cfghist
-export CONFIGFILE="${CONFIGDIR}"/config
+export CONFIGDIRPREFIX="${CONFIGDIRPREFIX:-/config}"
+export CONFIGDIR="${CONFIGDIRPREFIX}/$(hostname -s)"
+export CONFIGFILE="${CONFIGDIR}"/configfile
 export FILESDIR="${CONFIGDIR}"/files
 
 export CONFIGIGNORE="^$|^=|^cd|^edit|^show|^history|^ls|^cat|^zfs get|^zfs list|^exit|^quit|^pkill|^ps|^xbps-query"
