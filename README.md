@@ -24,7 +24,6 @@ Commands are saved to a configuration file, and changes to all files are tracked
 Dependencies
 ------------
 - bash
-- git
 - coreutils
 - grep
 - sed

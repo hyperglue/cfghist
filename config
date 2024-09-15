@@ -4,7 +4,7 @@
 export EDITOR="${EDITOR:-nano}"
 
 export CONFIGDIR=/etc/cfghist
-export CONFIGFILE="${CONFIGDIR}"/configfile
+export CONFIGFILE="${CONFIGDIR}"/config
 export FILESDIR="${CONFIGDIR}"/files
 
 export CONFIGIGNORE="^$|^=|^cd|^edit|^show|^history|^ls|^cat|^zfs get|^zfs list|^exit|^quit|^pkill|^ps|^xbps-query"
@@ -39,7 +39,6 @@ ask_if_save() {
 	    ;;
 	[nN]|[nN][oO])
 	    rm "${CONFIGFILE}.current"
-	    git reset --hard HEAD
 	    ask_if_rollback
 	    ;;
 	*)
@@ -80,9 +79,6 @@ ask_if_snapshot() {
 	    echo "zfs-snapshot / ${answer_name_snake_case}" >> "${CONFIGFILE}"
 		# shellcheck disable=SC2164
 	    cd "${CONFIGDIR}"
-	    git add ./*
-	    git add ./.*
-	    git commit -m "${answer_name}" -m "${answer_name_snake_case}"
 	    zfs-snapshot / "${answer_name_snake_case}"
 	    exit 0
 	    ;;
@@ -144,22 +140,5 @@ export -f edit
 export -f quit
 export -f save_previous_command
 export -f show
-
-# if git repo doesn't exist, then create it
-if ! test -d "${CONFIGDIR}/.git"
-then 
-    git init "${CONFIGDIR}"
-	echo "history" > "${CONFIGDIR}/.gitignore"
-	mkdir -p "${FILESDIR}"
-fi
-
-# check if user.name and user.email are set, so we can commit changes later
-# shellcheck disable=SC2164
-cd "${CONFIGDIR}"
-if ! (git config --get user.email && git config --get user.name) > /dev/null
-then
-    echo "Please set Git user.email and user.name, either globally or in ${CONFIGDIR}"
-    exit 2
-fi
 
 PROMPT_COMMAND="save_previous_command" bash --norc --noprofile; ask_if_save
