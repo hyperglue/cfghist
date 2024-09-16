@@ -4,7 +4,8 @@
 export EDITOR="${EDITOR:-nvim}"
 
 export CONFIGDIRPREFIX="${CONFIGDIRPREFIX:-/config}"
-export CONFIGDIR="${CONFIGDIRPREFIX}/$(hostname -s)"
+CONFIGDIR="${CONFIGDIRPREFIX}/$(hostname -s)"
+export CONFIGDIR
 export CONFIGFILE="${CONFIGDIR}"/configfile
 export FILESDIR="${CONFIGDIR}"/files
 
