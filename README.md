@@ -12,7 +12,7 @@ I couldn't really find anything like that, so I created this simple tool. The in
 
 How it works?
 -------------
-This tool leverages the snapshot capabilities of ZFS.
+This tool leverages the snapshot capabilities of ZFS although it can be used without it, purely as configuration manager.
 
 - A snapshot is created before any changes are made. 
 - Then, user enters a bash shell, where every command is saved to a temporary configuration file. Non-essential commands like `ls` can be filtered out using Regex.
