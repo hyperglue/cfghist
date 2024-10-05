@@ -28,6 +28,9 @@ then
     exit 1
 fi
 
+mkdir -p "${CONFIGDIR}"
+
+
 # ask if we want to save changes, if so then copy current config to permanent config file, then ask if we want create snapshot
 # if not then ask if we want rollback 
 ask_if_save() {
