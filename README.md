@@ -2,6 +2,10 @@ cfghist
 =======
 A tool for creating a configuration history of Linux systems.
 
+Todo
+----
+ - [ ] Describe config-install functions
+
 Idea
 ----
 As someone who frequently experiments with operating systems, I wanted a way to save the changes I make for easy reproduction or reference later.
