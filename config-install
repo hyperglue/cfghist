@@ -1,0 +1,65 @@
+#!/bin/bash
+if test -z "${1}"
+then
+    echo "Please specify configfile!"
+    exit 1
+fi
+
+if ! test -f "${1}"
+then
+    echo "Provided argument is not a file!"
+    exit 2
+fi
+
+# set -o errexit # abort on nonzero exitstatus
+set -o nounset # abort on unbound variable
+# shellcheck disable=SC3040
+set -o pipefail # don't hide errors within pipes
+
+runcommands() {
+    input="${1}"
+    inputdir="$(dirname "${input}")"
+
+    while read -r i;
+    do
+	case "${i}" in
+	    "edit"*)
+		filepath=$(echo "${i}" | cut -d " " -f 2)
+		filedir="$(dirname "${filepath}")"
+		set -x
+		mkdir -p "${filedir}"
+		cp -f "${inputdir}"/files"${filepath}" "${filepath}"
+		set +x
+		echo
+		;;
+	    *)
+		set -x
+		output=$(eval "${i}" 2>&1)  # Capture both stdout and stderr
+		set +x
+		if test "${?}" -eq 0 ; then
+		    :
+		else
+		    echo "${i}" >> error.log
+		    echo "${output}" | tee error.log
+		    echo "" >> error.log
+		fi
+		echo
+		;;
+	esac
+    done < "${input}"
+}
+
+
+configfile="$(readlink -f "${1}")"
+echo "Running commands from configfile ${configfile}:"
+echo
+runcommands "${configfile}"
+
+postinstallfile="$(dirname "${configfile}")/post-install"
+if test -f "${postinstallfile}"
+then
+    echo "Running commands from post-install file ${postinstallfile}:"
+    echo
+    # shellcheck disable=SC1090
+    . "${postinstallfile}"
+fi
