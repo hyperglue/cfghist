@@ -4,7 +4,7 @@
 export EDITOR="${EDITOR:-nvim}"
 
 export CONFIGDIRPREFIX="${CONFIGDIRPREFIX:-/config}"
-CONFIGDIR="${CONFIGDIRPREFIX}/$(hostname -s)"
+CONFIGDIR="${CONFIGDIRPREFIX}/$(cut -d"." -f1 < /proc/sys/kernel/hostname)"
 export CONFIGDIR
 export CONFIGFILE="${CONFIGDIR}"/configfile
 export FILESDIR="${CONFIGDIR}"/files
@@ -81,7 +81,7 @@ ask_if_snapshot() {
 	[yY]|[yY][eE][sS])
 	    read -rp "Name for the snapshot/commit? " answer_name;
 	    answer_name_snake_case="$(to_snake_case "${answer_name}")"
-	    echo "zfs-snapshot / ${answer_name_snake_case}" >> "${CONFIGFILE}"
+	    echo "# snapshot ${answer_name_snake_case}" >> "${CONFIGFILE}"
 		# shellcheck disable=SC2164
 	    cd "${CONFIGDIR}"
 	    zfs-snapshot / "${answer_name_snake_case}"
