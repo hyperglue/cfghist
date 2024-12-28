@@ -24,13 +24,21 @@ runcommands() {
     do
 	case "${i}" in
 	    "edit"*)
-		filepath=$(echo "${i}" | cut -d " " -f 2)
+		filepath=$(echo "${i}" | cut -d" " -f2)
 		filedir="$(dirname "${filepath}")"
 		set -x
 		mkdir -p "${filedir}"
 		cp -f "${inputdir}"/files"${filepath}" "${filepath}"
 		set +x
 		echo
+		;;
+	    "copydir"*)
+		fullpath=$(echo "${i}" | cut -d" " -f2)
+		dirname="$(dirname "${fullpath}")"
+		set -x
+		mkdir -p "${fullpath}"
+		cp -rf "${inputdir}"/files"${fullpath}" "${dirname}"
+		set +x
 		;;
 	    *)
 		set -x

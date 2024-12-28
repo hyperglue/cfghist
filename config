@@ -30,7 +30,7 @@ export FILESDIR="${CONFIGDIR}"/files
 
 mkdir -p "${CONFIGDIR}"
 
-export CONFIGIGNORE="^$|^=|^cd|^edit|^show|^history|^ls|^cat|^zfs get|^zfs list|^exit|^quit|^pkill|^ps|^xbps-query"
+export CONFIGIGNORE="^$|^=|^cd|^edit|^copydir|^show|^history|^ls|^cat|^zfs get|^zfs list|^exit|^quit|^pkill|^ps|^xbps-query"
 
 export HISTFILE="${CONFIGDIR}"/history
 export HISTFILESIZE=999999
@@ -110,7 +110,7 @@ ask_if_snapshot() {
 }
 
 
-# when we want to edit file, we make changes then we copy the file to CONFIGDIR repository
+# when we want to edit file, we make changes then we copy the file to CONFIGDIR
 function edit() {
     touch "${1}"
     filename="$(readlink -f "${1}")"
@@ -120,6 +120,22 @@ function edit() {
     cp -f "${filename}" "${FILESDIR}/${filename}"
     echo "edit ${filename}" >> "${CONFIGFILE}.current"
 
+}
+
+# if we want to just copy whole folder to CONFIGDIR
+function copydir() {
+    # copydir /home/tomato/.config/fish
+    if test -d "${1}"
+    then
+	fullpath=$(readlink -f "${1}")
+	dirname=$(dirname "${fullpath}")
+	mkdir -p "${FILESDIR}/${dirname}"
+	cp -rf "${fullpath}" "${FILESDIR}/${dirname}/."
+	echo "copydir ${fullpath}" >> "${CONFIGFILE}.current"
+    else
+	echo "Not a directory!"
+    fi
+    
 }
 
 function quit() {
@@ -153,6 +169,7 @@ function show() {
 }
 
 export -f edit
+export -f copydir
 export -f quit
 export -f save_previous_command
 export -f show
