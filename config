@@ -40,6 +40,8 @@ function to_snake_case() {
     echo "${1}" | tr '[:upper:]' '[:lower:]' | sed -E 's|\ |\_|g; s|(\S)_\$|\1|g'
 }
 
+echo "Make sure you have an up-to-date snapshot before making any changes!"
+
 # ask if we want to save changes, if so then copy current config to permanent config file, then ask if we want create snapshot
 # if not then ask if we want rollback 
 ask_if_save() {
